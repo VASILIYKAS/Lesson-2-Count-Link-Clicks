@@ -39,20 +39,35 @@ def count_clicks(token, link):
     response = requests.get(stats_url, params=params)
     response.raise_for_status()
     click = response.json()
+    print(click)
 
+    if click['response']['stats'] == []:
+        raise ValueError(f"Статистики по дайнной ссылке ещё нет")
     if 'error' in click:
         raise ValueError(
             f"{click['error'].get('error_msg')}\n"
             f"код ошибки: {click['error'].get('error_code')}"
         )
-
     return click['response']['stats'][0]['views']
 
 
-def is_shorten_link(url):
-    check = urlsplit(url)
-    return 'vk.cc' in check.netloc
+def is_shorten_link(token, url):
+    stats_url = 'https://api.vk.com/method/utils.getLinkStats'
+    key = urlsplit(url)
+    params = {
+        'access_token': token,
+        'key': key.path.replace('/', ''),
+        'v': '5.199',
+        'interval': 'forever',
+        'extended': 0,
 
+    }
+    response = requests.get(stats_url, params=params)
+    response.raise_for_status()
+    stats = response.json()
+    if 'error' in stats:
+        return False
+    return True
 
 
 def main():
@@ -61,7 +76,7 @@ def main():
     user_input = input('Вставьте ссылку: ')
 
     try:
-        if is_shorten_link(user_input):
+        if is_shorten_link(token, user_input):
             count_clicks_result = count_clicks(token, user_input)
             print(f'Кол-во переходов по ссылке: {count_clicks_result}')
         else:
