@@ -19,7 +19,7 @@ def shorten_link(token, url):
     if 'error' in export_url:
         raise ValueError(
             f"{export_url['error'].get('error_msg')}\n"
-            f"код ошибки: {export_url['error'].get('error_code')}"
+            f"Код ошибки: {export_url['error'].get('error_code')}"
         )
 
     return export_url['response'].get('short_url')
@@ -39,14 +39,13 @@ def count_clicks(token, link):
     response = requests.get(stats_url, params=params)
     response.raise_for_status()
     click = response.json()
-    print(click)
 
     if click['response']['stats'] == []:
         raise ValueError(f"Статистики по дайнной ссылке ещё нет")
     if 'error' in click:
         raise ValueError(
             f"{click['error'].get('error_msg')}\n"
-            f"код ошибки: {click['error'].get('error_code')}"
+            f"Код ошибки: {click['error'].get('error_code')}"
         )
     return click['response']['stats'][0]['views']
 
@@ -65,8 +64,21 @@ def is_shorten_link(token, url):
     response = requests.get(stats_url, params=params)
     response.raise_for_status()
     stats = response.json()
-    if 'error' in stats:
+
+    if stats['error']['error_code'] == 15:
+        print(
+            "Если вы указали сокращенную ссылку, то доступ к статистике запрещен. \n"
+            "Если вы указали обычную ссылку, дождитесь генерации сокращенной ссылки..."
+        )
+
+        shorten_link(token, url)
         return False
+    else:
+        raise ValueError(
+            f"{stats['error'].get('error_msg')}\n"
+            f"код ошибки: {stats['error'].get('error_code')}"
+        )
+
     return True
 
 
